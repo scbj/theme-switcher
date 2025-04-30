@@ -25,17 +25,9 @@ class ThemeIndicator extends PanelMenu.Button {
         this.icon = new St.Icon({style_class: 'system-status-icon'});
 
         this.schema = Gio.Settings.new('org.gnome.desktop.interface');
-        switch (this.schema.get_string('color-scheme')) {
-            case LIGHT_SCHEME_NAME:
-            case DEFAULT_SCHEME_NAME:
-                this.icon.icon_name = LIGHT_SCHEME_ICON;
-            break;
-            case DARK_SCHEME_NAME:
-                this.icon.icon_name = DARK_SCHEME_ICON;
-            break;
-            default:
-                Main.notify("Theme switching error.");
-        }
+        
+        this._colorSchemeChangedId = this.schema.connect('changed::color-scheme', this._update_icon.bind(this));
+        this._update_icon()
 
         this.hbox.add_child(this.icon);
         this.add_child(this.hbox);
@@ -63,6 +55,29 @@ class ThemeIndicator extends PanelMenu.Button {
             default:
                 Main.notify("Theme switching error.");
         }
+    }
+
+    _update_icon() {
+        switch (this.schema.get_string('color-scheme')) {
+            case LIGHT_SCHEME_NAME:
+            case DEFAULT_SCHEME_NAME:
+                this.icon.icon_name = LIGHT_SCHEME_ICON;
+            break;
+            case DARK_SCHEME_NAME:
+                this.icon.icon_name = DARK_SCHEME_ICON;
+            break;
+            default:
+                Main.notify("Switching theme icon failed.");
+        }
+    }
+
+    destroy() {
+        if (this._colorSchemeChangedId) {
+            this.schema.disconnect(this._colorSchemeChangedId);
+            this._colorSchemeChangedId = 0;
+        }
+
+        super.destroy()
     }
 });
 
